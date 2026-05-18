@@ -47,6 +47,7 @@ const TIMELINE = [
 let timelineIndex = 0;
 let currentChoiceInfo = null;
 let trialStartTime = null;
+let activePictureKeyHandler = null;
 
 function runTimeline() {
   const event = TIMELINE[timelineIndex];
@@ -65,7 +66,10 @@ function showInstructions(event) {
     <div class="screen">
       <h1>Real Picture Judgment Task</h1>
       <p>${event.text}</p>
-      <p>Click the left or right image to choose which one is real.</p>
+      <p>Use the keyboard to respond:</p>
+      <p><strong>Left Arrow</strong> = choose left picture</p>
+      <p><strong>Right Arrow</strong> = choose right picture</p>
+      <p><strong>1-5</strong> = confidence rating</p>
       <button id="start-button">Start</button>
     </div>
   `;
@@ -76,7 +80,15 @@ function showInstructions(event) {
   });
 }
 
+function removePictureKeyHandler() {
+  if (activePictureKeyHandler !== null) {
+    document.removeEventListener("keydown", activePictureKeyHandler);
+    activePictureKeyHandler = null;
+  }
+}
+
 function showPictureTrial(trial) {
+  removePictureKeyHandler();
   currentChoiceInfo = null;
   trialStartTime = performance.now();
 
@@ -87,24 +99,40 @@ function showPictureTrial(trial) {
       <div class="image-row">
         <div class="choice-card" id="left-choice">
           <img src="${trial.left_image}" alt="Left picture">
-          <div class="choice-label">Left</div>
+          <div class="choice-label">Left ←</div>
         </div>
 
         <div class="choice-card" id="right-choice">
           <img src="${trial.right_image}" alt="Right picture">
-          <div class="choice-label">Right</div>
+          <div class="choice-label">Right →</div>
         </div>
       </div>
 
-      <p class="small-text">Choose the real picture.</p>
+      <p class="small-text">Press Left Arrow for left. Press Right Arrow for right.</p>
     </div>
   `;
 
   document.getElementById("left-choice").addEventListener("click", () => handlePictureChoice(trial, "left"));
   document.getElementById("right-choice").addEventListener("click", () => handlePictureChoice(trial, "right"));
+
+  activePictureKeyHandler = event => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      handlePictureChoice(trial, "left");
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      handlePictureChoice(trial, "right");
+    }
+  };
+
+  document.addEventListener("keydown", activePictureKeyHandler);
 }
 
 function handlePictureChoice(trial, choice) {
+  if (currentChoiceInfo !== null) return;
+
+  removePictureKeyHandler();
+
   const choiceRT = Math.round(performance.now() - trialStartTime);
 
   currentChoiceInfo = {
@@ -136,6 +164,8 @@ function handleConfidenceSubmit(confidenceInfo) {
 }
 
 function showEndScreen() {
+  removePictureKeyHandler();
+
   app.innerHTML = `
     <div class="screen">
       <h1>Task complete</h1>

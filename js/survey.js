@@ -7,6 +7,7 @@
 
 function buildConfidenceSurvey(container, onSubmit) {
   const startTime = performance.now();
+  let submitted = false;
 
   container.innerHTML = `
     <div class="screen">
@@ -15,9 +16,31 @@ function buildConfidenceSurvey(container, onSubmit) {
 
       <div class="confidence-row" id="confidence-buttons"></div>
 
-      <p class="small-text">Please select one number from 1 to 5.</p>
+      <p class="small-text">Press 1, 2, 3, 4, or 5.</p>
     </div>
   `;
+
+  function submitConfidence(rating) {
+    if (submitted) return;
+    submitted = true;
+
+    document.removeEventListener("keydown", confidenceKeyHandler);
+
+    const rt = Math.round(performance.now() - startTime);
+    onSubmit({
+      confidence: rating,
+      confidence_rt_ms: rt
+    });
+  }
+
+  function confidenceKeyHandler(event) {
+    if (["1", "2", "3", "4", "5"].includes(event.key)) {
+      event.preventDefault();
+      submitConfidence(Number(event.key));
+    }
+  }
+
+  document.addEventListener("keydown", confidenceKeyHandler);
 
   const buttonRow = document.getElementById("confidence-buttons");
 
@@ -27,11 +50,7 @@ function buildConfidenceSurvey(container, onSubmit) {
     btn.textContent = rating;
 
     btn.addEventListener("click", () => {
-      const rt = Math.round(performance.now() - startTime);
-      onSubmit({
-        confidence: rating,
-        confidence_rt_ms: rt
-      });
+      submitConfidence(rating);
     });
 
     buttonRow.appendChild(btn);
