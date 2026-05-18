@@ -17,6 +17,8 @@ const PARTICIPANT_ID = makeParticipantId();
 
 const DATA = [];
 
+const SELECTION_FEEDBACK_MS = 1500;
+
 const TIMELINE = [
   {
     type: "instructions",
@@ -48,6 +50,7 @@ let timelineIndex = 0;
 let currentChoiceInfo = null;
 let trialStartTime = null;
 let activePictureKeyHandler = null;
+let selectionFeedbackTimer = null;
 
 function runTimeline() {
   const event = TIMELINE[timelineIndex];
@@ -87,8 +90,16 @@ function removePictureKeyHandler() {
   }
 }
 
+function clearSelectionFeedbackTimer() {
+  if (selectionFeedbackTimer !== null) {
+    clearTimeout(selectionFeedbackTimer);
+    selectionFeedbackTimer = null;
+  }
+}
+
 function showPictureTrial(trial) {
   removePictureKeyHandler();
+  clearSelectionFeedbackTimer();
   currentChoiceInfo = null;
   trialStartTime = performance.now();
 
@@ -112,9 +123,6 @@ function showPictureTrial(trial) {
     </div>
   `;
 
-  document.getElementById("left-choice").addEventListener("click", () => handlePictureChoice(trial, "left"));
-  document.getElementById("right-choice").addEventListener("click", () => handlePictureChoice(trial, "right"));
-
   activePictureKeyHandler = event => {
     if (event.key === "ArrowLeft") {
       event.preventDefault();
@@ -126,6 +134,18 @@ function showPictureTrial(trial) {
   };
 
   document.addEventListener("keydown", activePictureKeyHandler);
+}
+
+function showSelectionFeedback(choice) {
+  const selectedCard = document.getElementById(`${choice}-choice`);
+  if (selectedCard === null) return;
+
+  selectedCard.classList.add("selected-choice");
+
+  const selectedLabel = selectedCard.querySelector(".choice-label");
+  if (selectedLabel !== null) {
+    selectedLabel.textContent = choice === "left" ? "Selected Left ←" : "Selected Right →";
+  }
 }
 
 function handlePictureChoice(trial, choice) {
@@ -144,13 +164,19 @@ function handlePictureChoice(trial, choice) {
     correct_side: trial.correct_side,
     choice: choice,
     correct: choice === trial.correct_side ? 1 : 0,
+    selection_rt_ms: choiceRT,
     choice_rt_ms: choiceRT,
     confidence: "",
     confidence_rt_ms: "",
     timestamp: new Date().toISOString()
   };
 
-  buildConfidenceSurvey(app, handleConfidenceSubmit);
+  showSelectionFeedback(choice);
+
+  selectionFeedbackTimer = setTimeout(() => {
+    selectionFeedbackTimer = null;
+    buildConfidenceSurvey(app, handleConfidenceSubmit);
+  }, SELECTION_FEEDBACK_MS);
 }
 
 function handleConfidenceSubmit(confidenceInfo) {
@@ -165,6 +191,7 @@ function handleConfidenceSubmit(confidenceInfo) {
 
 function showEndScreen() {
   removePictureKeyHandler();
+  clearSelectionFeedbackTimer();
 
   app.innerHTML = `
     <div class="screen">

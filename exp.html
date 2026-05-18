@@ -36,15 +36,17 @@
 
     .choice-card {
       width: 380px;
-      cursor: pointer;
+      cursor: default;
       border: 3px solid transparent;
       border-radius: 12px;
       padding: 12px;
       background: #fafafa;
     }
 
-    .choice-card:hover {
-      border-color: #555;
+    .choice-card.selected-choice {
+      border-color: #222;
+      box-shadow: 0 0 0 5px rgba(34, 34, 34, 0.18);
+      background: #fff;
     }
 
     .choice-card img {
@@ -88,6 +90,16 @@
       width: 70px;
       height: 55px;
       font-size: 20px;
+    }
+
+    .confidence-key-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eee;
+      border-radius: 8px;
+      cursor: default;
+      user-select: none;
     }
 
     .small-text {

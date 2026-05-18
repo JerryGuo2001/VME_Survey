@@ -14,7 +14,7 @@ function buildConfidenceSurvey(container, onSubmit) {
       <h2>How confident are you in your answer?</h2>
       <p>1 = Not confident at all, 5 = Very confident</p>
 
-      <div class="confidence-row" id="confidence-buttons"></div>
+      <div class="confidence-row" id="confidence-options"></div>
 
       <p class="small-text">Press 1, 2, 3, 4, or 5.</p>
     </div>
@@ -42,17 +42,13 @@ function buildConfidenceSurvey(container, onSubmit) {
 
   document.addEventListener("keydown", confidenceKeyHandler);
 
-  const buttonRow = document.getElementById("confidence-buttons");
+  const optionRow = document.getElementById("confidence-options");
 
   for (let rating = 1; rating <= 5; rating++) {
-    const btn = document.createElement("button");
-    btn.className = "confidence-button";
-    btn.textContent = rating;
-
-    btn.addEventListener("click", () => {
-      submitConfidence(rating);
-    });
-
-    buttonRow.appendChild(btn);
+    const option = document.createElement("div");
+    option.className = "confidence-button confidence-key-option";
+    option.textContent = rating;
+    option.setAttribute("aria-hidden", "true");
+    optionRow.appendChild(option);
   }
 }
