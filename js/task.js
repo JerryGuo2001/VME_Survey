@@ -3,6 +3,7 @@
 
   This file stores the main task timeline.
   Odd-one-out trials are defined separately in odd_one_out.js.
+  Post-survey code is defined separately in post_survey.js.
   To add more real-picture trials later, add more objects to TIMELINE.
 */
 
@@ -49,6 +50,10 @@ const TIMELINE = [
   },
 
   {
+    type: "post_survey"
+  },
+
+  {
     type: "end"
   }
 ];
@@ -70,6 +75,8 @@ function runTimeline() {
     showOddOneOutTrial(event);
   } else if (event.type === "real_picture_trial") {
     showPictureTrial(event);
+  } else if (event.type === "post_survey") {
+    showPostSurvey();
   } else if (event.type === "end") {
     showEndScreen();
   }
@@ -303,6 +310,19 @@ function handleConfidenceSubmit(confidenceInfo) {
 
   timelineIndex++;
   runTimeline();
+}
+
+
+function showPostSurvey() {
+  removePictureKeyHandler();
+  clearSelectionFeedbackTimer();
+  currentChoiceInfo = null;
+
+  buildPostSurvey(app, postSurveyInfo => {
+    DATA.push(postSurveyInfo);
+    timelineIndex++;
+    runTimeline();
+  });
 }
 
 function showEndScreen() {
