@@ -2,13 +2,8 @@
   task.js
 
   This file stores the main task timeline.
-  To add more trials later, add more objects to TIMELINE.
-  Each trial should have:
-    - type: "real_picture_trial"
-    - trial_id
-    - left_image
-    - right_image
-    - correct_side: "left" or "right"
+  Odd-one-out trials are defined separately in odd_one_out.js.
+  To add more real-picture trials later, add more objects to TIMELINE.
 */
 
 const app = document.getElementById("app");
@@ -19,10 +14,22 @@ const DATA = [];
 
 const SELECTION_FEEDBACK_MS = 1500;
 
+const ODD_ONE_OUT_TIMELINE =
+  typeof buildOddOneOutTimeline === "function" ? buildOddOneOutTimeline() : [];
+
 const TIMELINE = [
   {
     type: "instructions",
-    text: "In this task, you will see two pictures. Please judge which picture is the real picture."
+    title: "Task Instructions",
+    text: "You will first complete an odd-one-out phase."
+  },
+
+  ...ODD_ONE_OUT_TIMELINE,
+
+  {
+    type: "instructions",
+    title: "Real Picture Judgment Task",
+    text: "Now you will see two pictures. Please judge which picture is the real picture."
   },
 
   {
@@ -57,6 +64,10 @@ function runTimeline() {
 
   if (event.type === "instructions") {
     showInstructions(event);
+  } else if (event.type === "odd_one_out_instructions") {
+    showOddOneOutInstructions(event);
+  } else if (event.type === "odd_one_out_trial") {
+    showOddOneOutTrial(event);
   } else if (event.type === "real_picture_trial") {
     showPictureTrial(event);
   } else if (event.type === "end") {
@@ -67,17 +78,32 @@ function runTimeline() {
 function showInstructions(event) {
   app.innerHTML = `
     <div class="screen">
-      <h1>Real Picture Judgment Task</h1>
+      <h1>${event.title}</h1>
       <p>${event.text}</p>
-      <p>Use the keyboard to respond:</p>
-      <p><strong>Left Arrow</strong> = choose left picture</p>
-      <p><strong>Right Arrow</strong> = choose right picture</p>
-      <p><strong>1-5</strong> = confidence rating</p>
-      <button id="start-button">Start</button>
+      <button id="start-button">Continue</button>
     </div>
   `;
 
   document.getElementById("start-button").addEventListener("click", () => {
+    timelineIndex++;
+    runTimeline();
+  });
+}
+
+function showOddOneOutInstructions(event) {
+  app.innerHTML = `
+    <div class="screen">
+      <h1>Odd One Out</h1>
+      <p>${event.text}</p>
+      <p>Use the keyboard to respond:</p>
+      <p><strong>1</strong> = left picture</p>
+      <p><strong>2</strong> = middle picture</p>
+      <p><strong>3</strong> = right picture</p>
+      <button id="odd-one-out-start-button">Start odd-one-out phase</button>
+    </div>
+  `;
+
+  document.getElementById("odd-one-out-start-button").addEventListener("click", () => {
     timelineIndex++;
     runTimeline();
   });
@@ -95,6 +121,95 @@ function clearSelectionFeedbackTimer() {
     clearTimeout(selectionFeedbackTimer);
     selectionFeedbackTimer = null;
   }
+}
+
+function showOddOneOutTrial(trial) {
+  removePictureKeyHandler();
+  clearSelectionFeedbackTimer();
+  currentChoiceInfo = null;
+  trialStartTime = performance.now();
+
+  app.innerHTML = `
+    <div class="screen">
+      <h2>Which picture is the odd one out?</h2>
+
+      <div class="ooo-image-row">
+        <div class="ooo-choice-card" id="odd-choice-1">
+          <img src="${trial.images[0]}" alt="Option 1">
+          <div class="ooo-choice-label">1</div>
+        </div>
+
+        <div class="ooo-choice-card" id="odd-choice-2">
+          <img src="${trial.images[1]}" alt="Option 2">
+          <div class="ooo-choice-label">2</div>
+        </div>
+
+        <div class="ooo-choice-card" id="odd-choice-3">
+          <img src="${trial.images[2]}" alt="Option 3">
+          <div class="ooo-choice-label">3</div>
+        </div>
+      </div>
+
+      <p class="small-text">Press 1, 2, or 3.</p>
+    </div>
+  `;
+
+  activePictureKeyHandler = event => {
+    if (["1", "2", "3"].includes(event.key)) {
+      event.preventDefault();
+      handleOddOneOutChoice(trial, Number(event.key));
+    }
+  };
+
+  document.addEventListener("keydown", activePictureKeyHandler);
+}
+
+function showOddOneOutFeedback(choice) {
+  const selectedCard = document.getElementById(`odd-choice-${choice}`);
+  if (selectedCard === null) return;
+
+  selectedCard.classList.add("selected-choice");
+
+  const selectedLabel = selectedCard.querySelector(".ooo-choice-label");
+  if (selectedLabel !== null) {
+    selectedLabel.textContent = `Selected ${choice}`;
+  }
+}
+
+function handleOddOneOutChoice(trial, choice) {
+  if (currentChoiceInfo !== null) return;
+
+  removePictureKeyHandler();
+
+  const choiceRT = Math.round(performance.now() - trialStartTime);
+  const hasCorrectOption = trial.correct_option !== "" && trial.correct_option !== undefined && trial.correct_option !== null;
+  const correctOption = hasCorrectOption ? Number(trial.correct_option) : "";
+
+  currentChoiceInfo = {
+    participant_id: PARTICIPANT_ID,
+    phase: "odd_one_out",
+    trial_index: timelineIndex,
+    trial_id: trial.trial_id,
+    option_1_image: trial.images[0],
+    option_2_image: trial.images[1],
+    option_3_image: trial.images[2],
+    choice: choice,
+    selected_image: trial.images[choice - 1],
+    correct_option: trial.correct_option,
+    correct: hasCorrectOption ? (choice === correctOption ? 1 : 0) : "",
+    rt_ms: choiceRT,
+    timestamp: new Date().toISOString()
+  };
+
+  DATA.push(currentChoiceInfo);
+
+  showOddOneOutFeedback(choice);
+
+  selectionFeedbackTimer = setTimeout(() => {
+    selectionFeedbackTimer = null;
+    timelineIndex++;
+    runTimeline();
+  }, SELECTION_FEEDBACK_MS);
 }
 
 function showPictureTrial(trial) {
@@ -157,6 +272,7 @@ function handlePictureChoice(trial, choice) {
 
   currentChoiceInfo = {
     participant_id: PARTICIPANT_ID,
+    phase: "real_picture",
     trial_index: timelineIndex,
     trial_id: trial.trial_id,
     left_image: trial.left_image,

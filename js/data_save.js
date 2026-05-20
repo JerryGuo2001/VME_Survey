@@ -13,7 +13,13 @@ function makeParticipantId() {
 function convertRowsToCSV(rows) {
   if (!rows.length) return "";
 
-  const headers = Object.keys(rows[0]);
+  const headers = [];
+  rows.forEach(row => {
+    Object.keys(row).forEach(key => {
+      if (!headers.includes(key)) headers.push(key);
+    });
+  });
+
   const escapeCell = value => {
     if (value === null || value === undefined) return "";
     const stringValue = String(value);

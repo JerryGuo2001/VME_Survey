@@ -34,6 +34,14 @@
       margin: 28px 0;
     }
 
+    .ooo-image-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 28px 0;
+      flex-wrap: wrap;
+    }
+
     .choice-card {
       width: 380px;
       cursor: default;
@@ -43,7 +51,17 @@
       background: #fafafa;
     }
 
-    .choice-card.selected-choice {
+    .ooo-choice-card {
+      width: 280px;
+      cursor: default;
+      border: 3px solid transparent;
+      border-radius: 12px;
+      padding: 12px;
+      background: #fafafa;
+    }
+
+    .choice-card.selected-choice,
+    .ooo-choice-card.selected-choice {
       border-color: #222;
       box-shadow: 0 0 0 5px rgba(34, 34, 34, 0.18);
       background: #fff;
@@ -57,7 +75,16 @@
       border-radius: 8px;
     }
 
-    .choice-label {
+    .ooo-choice-card img {
+      width: 100%;
+      height: 220px;
+      object-fit: contain;
+      background: #eee;
+      border-radius: 8px;
+    }
+
+    .choice-label,
+    .ooo-choice-label {
       margin-top: 10px;
       font-size: 18px;
       font-weight: bold;
@@ -116,6 +143,7 @@
   <!-- Load helper files first, then the main task timeline. -->
   <script src="./js/data_save.js"></script>
   <script src="./js/survey.js"></script>
+  <script src="./js/odd_one_out.js"></script>
   <script src="./js/task.js"></script>
 </body>
 </html>
